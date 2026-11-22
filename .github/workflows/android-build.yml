@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'project.zip'
+      - 'NouradineAgricultureAndroid_phone_build.zip'
       - '.github/workflows/android-build.yml'
 
 jobs:
@@ -20,28 +20,28 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract project
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Extract Android project
         run: |
           mkdir -p extracted
-          unzip -q project.zip -d extracted
-
-      - name: Find Gradle wrapper
-        id: gradle
-        run: |
-          WRAPPER=$(find extracted -type f -name gradlew -print -quit)
-          if [ -z "$WRAPPER" ]; then
-            echo "Gradle wrapper not found"
+          unzip -q NouradineAgricultureAndroid_phone_build.zip -d extracted
+          PROJECT_DIR="$(find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\) -print -quit | xargs dirname)"
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Android Gradle project settings file not found"
             exit 1
           fi
-          echo "project_dir=$(dirname "$WRAPPER")" >> "$GITHUB_OUTPUT"
-          chmod +x "$WRAPPER"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Build APK
-        working-directory: ${{ steps.gradle.outputs.project_dir }}
-        run: ./gradlew assembleDebug
+        run: gradle -p "$PROJECT_DIR" assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NouradineAgriculture-APK
-          path: '**/build/outputs/apk/debug/*.apk'
+          path: extracted/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
