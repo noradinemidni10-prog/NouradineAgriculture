@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'NouradineAgricultureAndroid_phone_build.zip'
+      - 'project.zip'
       - '.github/workflows/android-build.yml'
 
 jobs:
@@ -20,30 +20,49 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-
-      - name: Extract Android project
+      - name: Extract original project
         run: |
+          test -f project.zip || { echo "project.zip is missing"; exit 1; }
           mkdir -p extracted
-          unzip -q NouradineAgricultureAndroid_phone_build.zip -d extracted
-          SETTINGS_FILE="$(find extracted -type f -name settings.gradle -print -quit)"
-          if [ -z "$SETTINGS_FILE" ]; then
-            echo "settings.gradle not found in Android project archive"
-            find extracted -maxdepth 3 -type f
+          unzip -q project.zip -d extracted
+          echo "Files in original project:"
+          find extracted -maxdepth 4 -type f | sort | head -250
+
+      - name: Locate Android Gradle project
+        id: locate
+        shell: bash
+        run: |
+          SETTINGS="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+          BUILD="$(find extracted -type f \( -name build.gradle -o -name build.gradle.kts \) -print -quit)"
+          if [ -n "$SETTINGS" ]; then
+            DIR="$(dirname "$SETTINGS")"
+          elif [ -n "$BUILD" ]; then
+            DIR="$(dirname "$BUILD")"
+          else
+            echo "No Gradle project found in project.zip."
+            echo "Top-level extracted files:"
+            find extracted -maxdepth 3 -type f | sort | head -250
             exit 1
           fi
-          PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "project_dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "Android/Gradle project directory: $DIR"
 
       - name: Build APK
-        run: gradle -p "$PROJECT_DIR" assembleDebug --no-daemon
+        env:
+          PROJECT_DIR: ${{ steps.locate.outputs.project_dir }}
+        run: |
+          cd "$PROJECT_DIR"
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NouradineAgriculture-APK
-          path: extracted/**/build/outputs/apk/debug/*.apk
+          path: |
+            extracted/**/build/outputs/apk/debug/*.apk
           if-no-files-found: error
