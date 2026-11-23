@@ -1,5 +1,5 @@
 -- Nouradine Agriculture: initial Supabase schema
--- Run in Supabase SQL Editor. Safe to re-run (idempotent policies/indexes).
+-- Safe to run more than once: creates missing objects without DROP statements.
 
 create extension if not exists pgcrypto;
 
@@ -80,27 +80,35 @@ alter table public.farm_tasks enable row level security;
 alter table public.soil_tests enable row level security;
 alter table public.crop_notes enable row level security;
 
-drop policy if exists "Profiles: read own" on public.profiles;
-create policy "Profiles: read own" on public.profiles for select to authenticated using (id = auth.uid());
-drop policy if exists "Profiles: insert own" on public.profiles;
-create policy "Profiles: insert own" on public.profiles for insert to authenticated with check (id = auth.uid());
-drop policy if exists "Profiles: update own" on public.profiles;
-create policy "Profiles: update own" on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
-
-drop policy if exists "Farms: users manage own" on public.farms;
-create policy "Farms: users manage own" on public.farms for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-
-drop policy if exists "Fields: users manage own" on public.fields;
-create policy "Fields: users manage own" on public.fields for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-
-drop policy if exists "Tasks: users manage own" on public.farm_tasks;
-create policy "Tasks: users manage own" on public.farm_tasks for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-
-drop policy if exists "Soil tests: users manage own" on public.soil_tests;
-create policy "Soil tests: users manage own" on public.soil_tests for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-
-drop policy if exists "Crop notes: users manage own" on public.crop_notes;
-create policy "Crop notes: users manage own" on public.crop_notes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+-- Create each policy only if it does not already exist.
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'profiles' and policyname = 'Profiles: read own') then
+    create policy "Profiles: read own" on public.profiles for select to authenticated using (id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'profiles' and policyname = 'Profiles: insert own') then
+    create policy "Profiles: insert own" on public.profiles for insert to authenticated with check (id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'profiles' and policyname = 'Profiles: update own') then
+    create policy "Profiles: update own" on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'farms' and policyname = 'Farms: users manage own') then
+    create policy "Farms: users manage own" on public.farms for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'fields' and policyname = 'Fields: users manage own') then
+    create policy "Fields: users manage own" on public.fields for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'farm_tasks' and policyname = 'Tasks: users manage own') then
+    create policy "Tasks: users manage own" on public.farm_tasks for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'soil_tests' and policyname = 'Soil tests: users manage own') then
+    create policy "Soil tests: users manage own" on public.soil_tests for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'crop_notes' and policyname = 'Crop notes: users manage own') then
+    create policy "Crop notes: users manage own" on public.crop_notes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  end if;
+end
+$$;
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -116,7 +124,18 @@ begin
 end;
 $$;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+-- Add the signup trigger only if it is not already present.
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger
+    where tgname = 'on_auth_user_created'
+      and tgrelid = 'auth.users'::regclass
+      and not tgisinternal
+  ) then
+    create trigger on_auth_user_created
+      after insert on auth.users
+      for each row execute procedure public.handle_new_user();
+  end if;
+end
+$$;
