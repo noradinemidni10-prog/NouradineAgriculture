@@ -24,6 +24,8 @@ nav{position:fixed;z-index:5;bottom:0;left:0;right:0;display:flex;justify-conten
 footer{text-align:center;color:var(--muted);font-size:11px;padding:25px 12px}.tag{display:inline-block;border-radius:30px;padding:4px 9px;background:#eaf5e5;color:#24643a;font-size:10px;font-weight:800}
 @media(min-width:680px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{padding:30px}.hero h2{font-size:32px}.tile{min-height:132px}}
 @media(max-width:360px){.wrap{padding:11px}.row2{grid-template-columns:1fr}.hero h2{font-size:22px}nav button{padding:8px;font-size:10px}}
+
+.prayer-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.prayer-time{background:#f2f7ed;border:1px solid #dce9d7;border-radius:13px;padding:12px;text-align:center}.prayer-time b{display:block;color:#125b35;font-size:14px}.prayer-time span{font-size:19px;font-weight:800;color:#183426}.prayer-time.next{border:2px solid #d6b451;background:#fff9e8}.prayer-status{font-size:12px;line-height:1.8;color:#587061;margin:8px 0}
 </style>
 </head>
 <body>
@@ -41,6 +43,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px 12px}.ta
 <button class="tile" onclick="show('pests')"><span class="ico">🐛</span><b>الأمراض والآفات</b><small>الوقاية والمكافحة المتكاملة</small></button>
 <button class="tile" onclick="show('calculator')"><span class="ico">🧮</span><b>حاسبات المزرعة</b><small>المياه والمساحة وكميات السماد</small></button>
 <button class="tile" onclick="show('weather')"><span class="ico">☀️</span><b>الطقس الزراعي</b><small>الحرارة والرطوبة والأمطار والرياح</small></button>
+<button class="tile" onclick="show('prayer')"><span class="ico">🕌</span><b>المؤذّن ومواقيت الصلاة</b><small>مواقيت الصلوات والتنبيه عند دخول الوقت</small></button>
 <button class="tile" onclick="show('farm')"><span class="ico">🚜</span><b>إدارة مزرعتي</b><small>سجل الحقول والمهام والملاحظات</small></button>
 <button class="tile" onclick="show('map')"><span class="ico">🗺️</span><b>دليل المناطق والمحاصيل</b><small>معلومات أولية حسب المنطقة والمناخ</small></button>
 <button class="tile" onclick="show('settings')"><span class="ico">⚙️</span><b>الإعدادات</b><small>اللغة والمظهر والخصوصية</small></button>
@@ -48,7 +51,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px 12px}.ta
 <section id="page" class="panel" hidden></section>
 <footer>© أكاديمية نورالدين لمستقبل أفضل · تأسيس نورالدين · الإرشادات العامة لا تغني عن تحليل التربة واستشارة مهندس زراعي عند الحاجة.</footer>
 </main>
-<nav><button class="active" data-page="home" onclick="show('home',this)">الرئيسية</button><button data-page="assistant" onclick="show('assistant',this)">🤖 المساعد</button><button data-page="library" onclick="show('library',this)">الموسوعة</button><button data-page="soil" onclick="show('soil',this)">التربة</button><button data-page="farm" onclick="show('farm',this)">مزرعتي</button></nav>
+<nav><button class="active" data-page="home" onclick="show('home',this)">الرئيسية</button><button data-page="assistant" onclick="show('assistant',this)">🤖 المساعد</button><button data-page="library" onclick="show('library',this)">الموسوعة</button><button data-page="soil" onclick="show('soil',this)">التربة</button><button data-page="farm" onclick="show('farm',this)">مزرعتي</button><button data-page="prayer" onclick="show('prayer',this)">🕌 الصلاة</button></nav>
 <script>
 const page=document.getElementById('page'),home=document.getElementById('home');let installPrompt=null,lastAnswer='';
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;document.getElementById('installBtn').hidden=false});
@@ -86,6 +89,8 @@ weather:`<h3>☀️ الطقس الزراعي</h3><p class="muted">بيانات 
 farm:`<h3>🚜 دفتر إدارة المزرعة</h3><p class="muted">احفظ الحقول والمهام والملاحظات على هذا الجهاز. المزامنة بين الأجهزة تتطلب إعداد حساب وقاعدة بيانات.</p><label>اسم الحقل</label><input id="fieldName" placeholder="مثلاً الحقل الشمالي"><label>المحصول</label><input id="fieldCrop" placeholder="مثلاً زيتون"><label>المهمة أو الملاحظة</label><textarea id="fieldTask" placeholder="ري، تسميد، تقليم، مراقبة..."></textarea><label>التاريخ</label><input id="taskDate" type="date"><button onclick="saveTask()">حفظ المهمة</button><div id="tasks" class="result"></div>`,
 map:`<h3>🗺️ دليل المناطق الزراعية</h3><p class="muted">اختيار المحصول لا يعتمد على اسم الولاية فقط؛ بل على الارتفاع والأمطار والصقيع ونوع التربة ومصدر المياه.</p><label>المنطقة</label><select id="region"><option>باتنة والهضاب العليا</option><option>بسكرة والجنوب الشرقي</option><option>الجزائر والساحل</option><option>سطيف والهضاب</option><option>تيزي وزو والمرتفعات</option><option>وادي سوف</option></select><button onclick="regionGuide()">عرض اعتبارات المنطقة</button><div id="regionOut" class="result" hidden></div>`,
 settings:`<h3>⚙️ إعدادات الأكاديمية</h3><div class="info"><b>هوية الأكاديمية</b><p>المؤسس: نورالدين. الروبوت المساعد شخصية زراعية رقمية مستقلة، ولا يستخدم صورتك الشخصية.</p></div><div class="info" style="margin-top:9px"><b>تغيير الخلفية</b><p>اختر خلفية جاهزة أو صورة من هاتفك. تحفظ الخلفية على هذا الجهاز ويمكنك إعادتها في أي وقت.</p><div class="chips"><button class="chip" onclick="setBackground('garden')">حديقة خضراء</button><button class="chip" onclick="setBackground('field')">حقول ذهبية</button><button class="chip" onclick="setBackground('plain')">خلفية هادئة</button></div><label>اختيار صورة من الهاتف</label><input type="file" accept="image/*" onchange="customBackground(event)"><button class="secondary" style="margin-top:9px" onclick="resetBackground()">إعادة الخلفية الأصلية</button></div><div class="info" style="margin-top:9px"><b>اللغة</b><p>العربية هي اللغة الأساسية في هذه النسخة.</p></div><div class="info" style="margin-top:9px"><b>الخصوصية</b><p>المهام والتحليلات المحفوظة محلياً تبقى على هذا الجهاز. الطقس يرسل اسم المدينة إلى خدمة الطقس عند طلبك.</p></div><div class="info" style="margin-top:9px"><b>حالة الخدمات</b><p>الموسوعة والحاسبات ودفتر المزرعة تعمل محلياً. تسجيل الحساب والمزامنة والذكاء الاصطناعي وتحليل الصور السحابي لم تُفعّل بعد.</p></div><button class="secondary" onclick="clearLocal()">مسح بيانات المزرعة من هذا الجهاز</button>`
+
+prayer:`<h3>🕌 المؤذّن ومواقيت الصلاة</h3><p class="muted">اختر مدينتك في الجزائر لعرض المواقيت اليومية. يلزم الاتصال بالإنترنت لتحديث الحسابات.</p><label>المدينة</label><select id="prayerCity"><option value="Batna">باتنة</option><option value="Algiers">الجزائر العاصمة</option><option value="Oran">وهران</option><option value="Constantine">قسنطينة</option><option value="Setif">سطيف</option><option value="Biskra">بسكرة</option><option value="Annaba">عنابة</option><option value="Tlemcen">تلمسان</option><option value="Ouargla">ورقلة</option><option value="Bejaia">بجاية</option><option value="Blida">البليدة</option><option value="Djelfa">الجلفة</option><option value="Tizi Ouzou">تيزي وزو</option></select><div class="actions"><button onclick="loadPrayerTimes()">تحديث المواقيت</button><button class="secondary" onclick="enablePrayerAlerts()">تفعيل التنبيه</button></div><div id="prayerStatus" class="prayer-status">اضغط «تحديث المواقيت» لعرض أوقات الصلاة.</div><div id="prayerTimes" class="prayer-times"></div><p class="muted">ملاحظة: التنبيه يعمل ما دام التطبيق مفتوحاً أو يعمل في الخلفية. قد يوقف Android التنبيه بعد إغلاق التطبيق أو توفير البطارية. هذا الإصدار يطلق تنبيهاً صوتياً قصيراً، وليس تسجيلاً للأذان.</p>` ,
 };
 function show(id,btn){home.hidden=id!=='home';page.hidden=id==='home';if(id!=='home'){page.innerHTML=views[id]||'';page.scrollIntoView({behavior:'smooth',block:'start'});if(id==='library'){cropInfo();searchKnowledge()}if(id==='farm')renderTasks();if(id==='weather'){} }document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(btn)btn.classList.add('active')}
 function reply(q){let s=q.toLowerCase();let hit=knowledge.find(k=>k.keys.some(w=>s.includes(w)));if(hit)return 'موضوع: '+hit.title+'\n\n'+hit.answer+'\n\nإذا ذكرت اسم المحصول والمنطقة وعمر النبات، يمكن تضييق الاحتمالات. هذه إرشادات عامة وليست تشخيصاً مؤكداً.';return 'أستطيع المساعدة في التربة والري والطماطم والبطاطا والقمح والزيتون والتسميد والآفات. اكتب اسم المحصول والمنطقة والعرض الذي تلاحظه.\n\nتنبيه: هذا مساعد إرشادي محلي وليس نموذج ذكاء اصطناعي متصلاً بالإنترنت.'}
@@ -180,6 +185,52 @@ function applySavedBackground() {
   }
 }
 function clearLocal(){if(confirm('هل تريد مسح مهام وتحليلات التربة المحفوظة على هذا الجهاز؟')){localStorage.removeItem('na_tasks');localStorage.removeItem('na_soils');alert('تم مسح البيانات المحلية المحددة.');}}
+
+// مواقيت الصلاة والتنبيه المحلي
+let prayerTimer=null;
+const prayerNames={Fajr:'الفجر',Dhuhr:'الظهر',Asr:'العصر',Maghrib:'المغرب',Isha:'العشاء'};
+async function loadPrayerTimes(){
+ const city=document.getElementById('prayerCity')?.value||localStorage.getItem('na_prayer_city')||'Batna';
+ const status=document.getElementById('prayerStatus'),out=document.getElementById('prayerTimes');
+ if(!status||!out)return;
+ localStorage.setItem('na_prayer_city',city);
+ status.textContent='جارٍ جلب مواقيت الصلاة...';out.innerHTML='';
+ try{
+  const date=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Algiers',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date()).replaceAll('/','-');
+  const url='https://api.aladhan.com/v1/timingsByCity/'+date+'?city='+encodeURIComponent(city)+'&country=Algeria&method=19';
+  const response=await fetch(url);if(!response.ok)throw new Error('تعذر الاتصال بخدمة المواقيت');
+  const json=await response.json();if(json.code!==200||!json.data?.timings)throw new Error('لم تصل بيانات المواقيت');
+  const times=json.data.timings;
+  const now=new Date(),current=now.getHours()*60+now.getMinutes();
+  const items=Object.entries(prayerNames).map(([key,name])=>({key,name,time:times[key]?.slice(0,5)})).filter(x=>x.time);
+  const next=items.find(x=>{const [h,m]=x.time.split(':').map(Number);return h*60+m>current;});
+  out.innerHTML=items.map(x=>'<div class="prayer-time '+(next?.key===x.key?'next':'')+'"><b>'+x.name+(next?.key===x.key?' · القادمة':'')+'</b><span>'+x.time+'</span></div>').join('');
+  status.textContent='مواقيت اليوم لمدينة '+document.getElementById('prayerCity').selectedOptions[0].text+' · طريقة الحساب: رابطة العالم الإسلامي. راجع المسجد المحلي عند اختلاف التوقيت.';
+  scheduleNextPrayer(items);
+ }catch(error){status.textContent='تعذر جلب المواقيت: '+error.message+' — تحقق من الإنترنت وحاول مجدداً.'}
+}
+function scheduleNextPrayer(items){
+ if(prayerTimer)clearTimeout(prayerTimer);
+ const now=new Date();let upcoming=null,when=null;
+ for(const item of items){const [h,m]=item.time.split(':').map(Number);const t=new Date(now);t.setHours(h,m,0,0);if(t>now){upcoming=item;when=t;break;}}
+ if(!upcoming)return;
+ const delay=when-now;
+ if(delay>2147480000)return;
+ prayerTimer=setTimeout(()=>{notifyPrayer(upcoming.name);},delay);
+}
+async function enablePrayerAlerts(){
+ if(!('Notification'in window)){alert('هذا المتصفح لا يدعم إشعارات الصلاة.');return;}
+ const permission=await Notification.requestPermission();
+ const status=document.getElementById('prayerStatus');
+ if(status)status.textContent=permission==='granted'?'تم تفعيل الإشعارات. حدّث المواقيت لجدولة التنبيه القادم.':'لم يتم السماح بالإشعارات. يمكنك تغيير الإذن من إعدادات المتصفح.';
+ if(permission==='granted')loadPrayerTimes();
+}
+function notifyPrayer(name){
+ try{if('Notification'in window&&Notification.permission==='granted')new Notification('حان وقت صلاة '+name,{body:'حيّ على الصلاة · أكاديمية نورالدين',icon:'icon.svg'});}catch(e){}
+ try{const C=window.AudioContext||window.webkitAudioContext;if(C){const ctx=new C(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=880;gain.gain.value=.12;osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+1.2);osc.onended=()=>ctx.close();}}catch(e){}
+ const s=document.getElementById('prayerStatus');if(s)s.textContent='حان الآن وقت صلاة '+name+'. حدّث المواقيت لجدولة الصلاة التالية.';
+}
+
 applySavedBackground();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
