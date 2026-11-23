@@ -1,13 +1,14 @@
 {
-  "name": "Nouradine Agriculture – نورالدين للزراعة",
-  "short_name": "Nouradine",
+  "name": "أكاديمية نورالدين للزراعة المستدامة",
+  "short_name": "أكاديمية نورالدين",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f2e6",
-  "theme_color": "#174b32",
-  "description": "مع نورالدين نحو زراعة ناجحة ومثمرة",
+  "background_color": "#f4f7ef",
+  "theme_color": "#125b35",
+  "description": "تعلم الزراعة المستدامة وإدارة المزرعة بالعربية",
   "icons": [
     {
       "src": "./icon.svg",
