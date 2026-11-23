@@ -25,7 +25,7 @@ jobs:
           const html = fs.readFileSync('index.html', 'utf8');
           if (!html.includes('<html lang="ar" dir="rtl">')) throw new Error('Arabic RTL document declaration missing');
           if (!html.includes('أكاديمية نورالدين لمستقبل أفضل')) throw new Error('Academy title missing');
-          const scripts = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/gi)];
+          const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)];
           if (!scripts.length) throw new Error('No inline application script found');
           for (const script of scripts) new vm.Script(script[1]);
           for (const file of ['manifest.webmanifest', 'sw.js', 'icon.svg']) {
