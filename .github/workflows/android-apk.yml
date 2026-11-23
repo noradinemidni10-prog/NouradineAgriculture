@@ -10,7 +10,7 @@ on:
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -34,15 +34,30 @@ jobs:
         run: |
           mkdir -p android/app/src/main/assets
           cp index.html android/app/src/main/assets/index.html
-          if [ -f manifest.webmanifest ]; then cp manifest.webmanifest android/app/src/main/assets/; fi
-          if [ -f sw.js ]; then cp sw.js android/app/src/main/assets/; fi
-      - name: Build debug APK
+          cp manifest.webmanifest android/app/src/main/assets/ || true
+          cp sw.js android/app/src/main/assets/ || true
+      - name: Build and verify APK
         working-directory: android
-        run: gradle --no-daemon assembleDebug
-      - name: Upload APK
+        run: |
+          gradle --no-daemon assembleDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          ls -lh app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | head -n 5
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Nouradine-Agriculture-Android-APK
+          name: Nouradine-Agriculture-APK-v1.1
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
+          compression-level: 0
+          retention-days: 30
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nouradine-v1.1-build-${{ github.run_number }}
+          name: أكاديمية نورالدين Android v1.1
+          body: |
+            ملف APK مباشر لهواتف Android.
+            نزّل الملف الذي ينتهي بـ .apk، ولا تثبّت ملف ZIP الخاص بالأرشيف.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          make_latest: true
