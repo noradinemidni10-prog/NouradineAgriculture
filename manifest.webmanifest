@@ -1,0 +1,12 @@
+{
+  "name": "Nouradine Agriculture – نورالدين للزراعة",
+  "short_name": "Nouradine",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f2e6",
+  "theme_color": "#174b32",
+  "description": "مع نورالدين نحو زراعة ناجحة ومثمرة",
+  "icons": []
+}
