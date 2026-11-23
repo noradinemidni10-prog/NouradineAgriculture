@@ -5,10 +5,11 @@ android {
     namespace 'com.nouradine.agriculture'
     compileSdk 35
     defaultConfig {
-        applicationId 'com.nouradine.agriculture.mobile'
+        // New unique package ID to avoid conflict with older installed builds.
+        applicationId 'com.nouradine.agriculture.academy'
         minSdk 23
         targetSdk 35
-        versionCode 3
-        versionName '1.2'
+        versionCode 4
+        versionName '1.3'
     }
 }
