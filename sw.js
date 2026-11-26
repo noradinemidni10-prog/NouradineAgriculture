@@ -25,17 +25,15 @@ self.addEventListener('fetch',event=>{
 
   if(request.mode==='navigate'||url.pathname.endsWith('/index.html')){
     // Serve the saved page immediately, then refresh the cache quietly.
+    const refresh=caches.open(CACHE).then(cache=>fetch(request).then(response=>{
+      if(response.ok)cache.put('./index.html',response.clone());
+      return response;
+    }).catch(()=>null));
+    event.waitUntil(refresh.catch(()=>{}));
     event.respondWith((async()=>{
       const cache=await caches.open(CACHE);
       const saved=await cache.match('./index.html');
-      const refresh=fetch(request).then(response=>{
-        if(response.ok)cache.put('./index.html',response.clone());
-        return response;
-      }).catch(()=>null);
-      if(saved){
-        event.waitUntil(refresh);
-        return saved;
-      }
+      if(saved)return saved;
       return (await refresh)||cache.match('./')||Response.error();
     })());
     return;
