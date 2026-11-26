@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#125b35"><meta name="description" content="أكاديمية نورالدين للزراعة المستدامة: موسوعة وإرشاد وأدوات زراعية للفلاح الجزائري">
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="preconnect" href="https://api.aladhan.com" crossorigin>
 <title>أكاديمية نورالدين الزراعية</title>
 <style>
 :root{--green:#125b35;--green2:#21834a;--lime:#d8efb2;--gold:#e6bf58;--ink:#183426;--muted:#6c7c70;--paper:#f4f7ef;--line:#e1e9df;--white:#fff;--shadow:0 12px 35px #173e2914}
@@ -232,6 +232,6 @@ function notifyPrayer(name){
 }
 
 applySavedBackground();
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
 </script>
 </body></html>
